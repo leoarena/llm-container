@@ -1,4 +1,4 @@
-# OpenCode
+# LLM Container
 
 Docker container to isolate LLMs
 
