@@ -35,3 +35,22 @@ alias llm-container='docker run --rm -it \
 --name llm-container \
 llm-container-image'
 ```
+
+### Start llm-container
+
+```bash
+cd project/directory
+llm-container
+```
+
+Start opencode directly
+
+```bash
+llm-container opencode
+```
+
+Start codex directly
+
+```bash
+llm-container codex
+```
