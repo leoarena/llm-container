@@ -14,9 +14,9 @@ docker build -t llm-container-image .
 
 ```bash
 docker run --rm -it \
--v codex_volume:/root/.codex \
--v ~/opencode_volume/.config/opencode:/root/.config/opencode \
--v ~/opencode_volume/.local:/root/.local \
+-v ~/llm_container_volume/.codex:/root/.codex \
+-v ~/llm_container_volume/.config/opencode:/root/.config/opencode \
+-v ~/llm_container_volume/.local:/root/.local \
 -v $(pwd):/workspace \
 --name llm-container \
 llm-container-image
@@ -28,9 +28,9 @@ Add to ~/.bashrc
 
 ```
 alias llm-container='docker run --rm -it \
--v codex_volume:/root/.codex \
--v ~/opencode_volume/.config/opencode:/root/.config/opencode \
--v ~/opencode_volume/.local:/root/.local \
+-v ~/llm_container_volume/.codex:/root/.codex \
+-v ~/llm_container_volume/.config/opencode:/root/.config/opencode \
+-v ~/llm_container_volume/.local:/root/.local \
 -v $(pwd):/workspace \
 --name llm-container \
 llm-container-image'
