@@ -7,7 +7,7 @@ Docker container to isolate LLMs
 ### 1. Build the image
 
 ```bash
-docker build -t llm-container-image .
+docker build --no-cache -t llm-container-image .
 ```
 
 ### 2. Start the container
