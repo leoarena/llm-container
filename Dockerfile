@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     git \
     python3 \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm i -g opencode-ai && \
