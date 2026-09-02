@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     git \
+    php-cli \
     python3 \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
