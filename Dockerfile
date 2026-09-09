@@ -24,6 +24,7 @@ RUN set -eux; \
     if [ "$(id -g node)" != "$GROUP_ID" ]; then groupmod --gid "$GROUP_ID" node; fi; \
     if [ "$(id -u node)" != "$USER_ID" ]; then usermod --uid "$USER_ID" node; fi; \
     mkdir -p /workspace; \
+    printf '%s\n' "export PS1='\\[\\033[01;32m\\]node@llm-container\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]\\$ '" >> /home/node/.bashrc; \
     chown -R node:node /home/node /workspace
 
 WORKDIR /workspace

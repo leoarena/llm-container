@@ -12,15 +12,25 @@ its own container and reuses it between sessions.
 
 ## How to use
 
-### 1. Build the image
+### 1. Install the local CLI
+
+The CLI is linked from this checkout and is not published to npm:
+
+```bash
+npm install
+npm run install-local
+```
+
+### 2. Build the image
 
 UID and GID 1000 are used by default:
 
 ```bash
-docker build --no-cache -t llm-container-image .
+llm-container build
 ```
 
-To match a host user with a different UID or GID, pass them when building:
+The command builds the Dockerfile from this checkout without using the build
+cache. To match a host user with a different UID or GID, build manually:
 
 ```bash
 docker build --no-cache \
@@ -31,15 +41,6 @@ docker build --no-cache \
 
 The UID and GID are fixed in the image. Rebuild it when using the image for a
 host user with different IDs.
-
-### 2. Install the local CLI
-
-The CLI is linked from this checkout and is not published to npm:
-
-```bash
-npm install
-npm run install-local
-```
 
 ### 3. Start a workspace
 
@@ -110,9 +111,10 @@ can access any credentials stored there. Container networking is not disabled,
 so those processes can also make network connections and potentially transmit
 mounted data.
 
-Rebuilding `llm-container-image` does not replace existing containers. Remove
-the project's container before reopening it to use the rebuilt image. Removing
-a container does not delete the project or mounted configuration directories.
+`llm-container build` does not replace existing containers and prints a
+warning when managed containers exist. Remove a project's container before
+reopening it to use the rebuilt image. Removing a container does not delete the
+project or mounted configuration directories.
 
 ## Attribution
 

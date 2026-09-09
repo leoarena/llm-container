@@ -2,7 +2,7 @@
 
 import process from "node:process";
 import readline from "node:readline/promises";
-import { DockerClient } from "./docker.js";
+import { DockerClient, IMAGE_NAME } from "./docker.js";
 import { resolveProjectTarget, type ProjectTarget } from "./project.js";
 import { SessionRegistry } from "./sessions.js";
 
@@ -12,6 +12,7 @@ function usage(): void {
   console.log(`Usage:
   llm-container                         Open Bash in the current project
   llm-container <command> [args...]     Run a command in the current project
+  llm-container build
   llm-container run [path] [-- command]
   llm-container stop [path]
   llm-container remove [path] [--force]
@@ -70,6 +71,17 @@ async function main(args = process.argv.slice(2)): Promise<number> {
   if (["--help", "-h", "help"].includes(args[0])) { usage(); return 0; }
   if (["--version", "-v"].includes(args[0])) { console.log(VERSION); return 0; }
   client.ensureAvailable();
+  if (args[0] === "build") {
+    client.build();
+    console.log(`Image built successfully: ${IMAGE_NAME}`);
+    const containers = client.managedContainerNames();
+    if (containers.length > 0) {
+      console.warn("Existing containers were not replaced and may still use the previous image:");
+      for (const name of containers) console.warn(`  ${name}`);
+      console.warn("Remove a project's container and open it again to use the rebuilt image.");
+    }
+    return 0;
+  }
   if (args[0] === "list") return client.list();
   if (args[0] === "stop") {
     const target = resolveProjectTarget(args[1]);

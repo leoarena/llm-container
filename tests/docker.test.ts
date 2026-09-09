@@ -15,6 +15,29 @@ describe("Docker integration arguments", () => {
     expect(args).toContain("type=bind,source=/projects/my-api,target=/home/node/my-api");
     expect(args.slice(-3)).toEqual(["test-image", "sleep", "infinity"]);
   });
+  it("builds the image from the supplied Dockerfile and context", () => {
+    const calls: Array<{ command: string; args: string[] }> = [];
+    const client = new DockerClient((command, args) => {
+      calls.push({ command, args });
+      return { status: 0, stdout: "", stderr: "" };
+    });
+    client.build("test-image", "/project/Dockerfile");
+    expect(calls).toEqual([{
+      command: "docker",
+      args: ["build", "--no-cache", "-t", "test-image", "-f", "/project/Dockerfile", "/project"],
+    }]);
+  });
+  it("lists managed container names", () => {
+    const client = new DockerClient(() => ({
+      status: 0,
+      stdout: "llm-container-one-12345678\nllm-container-two-87654321\n",
+      stderr: "",
+    }));
+    expect(client.managedContainerNames()).toEqual([
+      "llm-container-one-12345678",
+      "llm-container-two-87654321",
+    ]);
+  });
   it("rejects root images", () => {
     const client = new DockerClient(() => ({ status: 0, stdout: "root\n", stderr: "" }));
     expect(() => client.ensureImageIsNonRoot()).toThrow("as root");

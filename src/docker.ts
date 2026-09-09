@@ -2,10 +2,12 @@ import { spawnSync, type SpawnSyncOptions } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { bindMount, type ProjectTarget } from "./project.js";
 
 export const IMAGE_NAME = process.env.LLM_CONTAINER_IMAGE ?? "llm-container-image";
 export const MANAGED_LABEL = "io.llm-container.managed=true";
+export const DOCKERFILE_PATH = fileURLToPath(new URL("../Dockerfile", import.meta.url));
 
 export interface CommandResult { status: number | null; stdout: string; stderr: string }
 export type Runner = (command: string, args: string[], options?: SpawnSyncOptions) => CommandResult;
@@ -30,6 +32,20 @@ export class DockerClient {
 
   ensureAvailable(): void {
     requireSuccess(this.runCommand("docker", ["info"], { stdio: "pipe" }), "Docker is not available");
+  }
+
+  build(image = IMAGE_NAME, dockerfile = DOCKERFILE_PATH): void {
+    requireSuccess(this.runCommand("docker", [
+      "build", "--no-cache", "-t", image, "-f", dockerfile, path.dirname(dockerfile),
+    ], { stdio: "inherit" }), `Could not build ${image}`);
+  }
+
+  managedContainerNames(): string[] {
+    const result = this.runCommand("docker", [
+      "ps", "-a", "--filter", `label=${MANAGED_LABEL}`, "--format", "{{.Names}}",
+    ], { stdio: "pipe" });
+    requireSuccess(result, "Could not list managed containers");
+    return result.stdout.split("\n").map(name => name.trim()).filter(Boolean);
   }
 
   ensureImageIsNonRoot(image = IMAGE_NAME): void {
