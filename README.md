@@ -1,6 +1,14 @@
 # LLM Container
 
-Docker container to isolate LLMs
+Persistent, isolated Docker workspaces for LLM coding agents. Each project gets
+its own container and reuses it between sessions.
+
+## Requirements
+
+- Docker Engine with a running daemon and the `docker` CLI available to the
+  current user
+- Node.js `^20.19.0` or `>=22.12.0`
+- npm, used to install dependencies and link the local CLI
 
 ## How to use
 
@@ -24,10 +32,55 @@ docker build --no-cache \
 The UID and GID are fixed in the image. Rebuild it when using the image for a
 host user with different IDs.
 
-### 2. Prepare the persistent directories
+### 2. Install the local CLI
 
-Create the directories before starting the container so Docker does not create
-them as root:
+The CLI is linked from this checkout and is not published to npm:
+
+```bash
+npm install
+npm run install-local
+```
+
+### 3. Start a workspace
+
+```bash
+cd ~/projects/my-api
+llm-container
+```
+
+The project is mounted at `/home/node/my-api`. Its container is named
+`llm-container-my-api-<path-hash>`, avoiding collisions between projects with
+the same directory name. It stops after the last session and is started and
+reused the next time.
+
+Run commands directly or target a different project:
+
+```bash
+llm-container opencode
+llm-container codex
+llm-container run /path/to/project
+llm-container run /path/to/project -- codex
+```
+
+Manage workspaces:
+
+```bash
+llm-container list
+llm-container stop /path/to/project
+llm-container remove /path/to/project
+llm-container remove /path/to/project --force
+```
+
+`stop` and `remove` derive the container name from an existing project path. If
+that path has been moved or deleted, use `llm-container list` to find the
+managed container name, then run `docker stop <container-name>` or
+`docker rm <container-name>` directly as appropriate.
+
+### Persistent configuration
+
+The CLI creates these directories automatically when it creates a container.
+Creating them in advance is optional, for example to inspect or set their
+permissions before first use:
 
 ```bash
 mkdir -p \
@@ -43,47 +96,36 @@ their ownership once:
 sudo chown -R "$(id -u):$(id -g)" ~/llm_container_volume
 ```
 
-### 3. Start the container
+The supplied image runs as `node`, with UID and GID 1000 by default. Before
+creating or reusing a workspace, the CLI reads Docker's `.Config.User` string
+and rejects an empty value, `root`, `0`, or a value beginning with `0:`. It does
+not resolve a named user to that user's effective UID inside a custom image.
 
-```bash
-docker run --rm -it \
-  -v ~/llm_container_volume/.codex:/home/node/.codex \
-  -v ~/llm_container_volume/.config/opencode:/home/node/.config/opencode \
-  -v ~/llm_container_volume/.local:/home/node/.local \
-  -v "$(pwd):/workspace" \
-  --name llm-container \
-  llm-container-image
-```
+### Isolation limits
 
-### Add an alias for easier use
+The container is a workspace boundary, not a sandbox for untrusted code. The
+project, `~/.codex`, `~/.config/opencode`, and `~/.local` are bind-mounted
+read-write. Processes in the container can modify or delete their contents and
+can access any credentials stored there. Container networking is not disabled,
+so those processes can also make network connections and potentially transmit
+mounted data.
 
-Add to ~/.bashrc
+Rebuilding `llm-container-image` does not replace existing containers. Remove
+the project's container before reopening it to use the rebuilt image. Removing
+a container does not delete the project or mounted configuration directories.
 
-```bash
-alias llm-container='docker run --rm -it \
-  -v ~/llm_container_volume/.codex:/home/node/.codex \
-  -v ~/llm_container_volume/.config/opencode:/home/node/.config/opencode \
-  -v ~/llm_container_volume/.local:/home/node/.local \
-  -v "$(pwd):/workspace" \
-  --name llm-container \
-  llm-container-image'
-```
+## Attribution
 
-### Start llm-container
+Portions of project-path resolution, deterministic container naming,
+bind-mounts, and the Docker inspect/start/stop/exec lifecycle were adapted from
+[aerovato/container](https://github.com/aerovato/container), Copyright (c)
+2026, kevinMEH, under the BSD 3-Clause License. Session tracking by PID and
+locks, non-root checks, project labels, and the surrounding CLI commands are
+`llm-container` implementations. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the complete upstream
+notice and license terms.
 
-```bash
-cd project/directory
-llm-container
-```
+## License
 
-Start opencode directly
-
-```bash
-llm-container opencode
-```
-
-Start codex directly
-
-```bash
-llm-container codex
-```
+This project is licensed under the BSD 3-Clause License. See
+[`LICENSE.md`](LICENSE.md).

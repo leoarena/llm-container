@@ -1,0 +1,23 @@
+{
+  "name": "llm-container",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Persistent per-project Docker workspaces for LLM coding agents.",
+  "license": "BSD-3-Clause",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "type": "module",
+  "bin": { "llm-container": "dist/main.js" },
+  "scripts": {
+    "build": "tsc && chmod u+x dist/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "install-local": "npm run build && npm link"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  }
+}
