@@ -105,10 +105,36 @@ export class DockerClient {
   list(): number {
     const result = this.runCommand("docker", [
       "ps", "-a", "--filter", `label=${MANAGED_LABEL}`, "--format",
-      "table {{.Names}}\t{{.Status}}\t{{.Label \"io.llm-container.project-path\"}}",
-    ], { stdio: "inherit" });
-    return result.status ?? 1;
+      "{{.Names}}\t{{.Status}}\t{{.CreatedAt}}\t{{.Label \"io.llm-container.project-path\"}}",
+    ], { stdio: "pipe" });
+    if (result.status !== 0) {
+      process.stderr.write(result.stderr);
+      return result.status ?? 1;
+    }
+    console.log(formatContainerList(result.stdout));
+    return 0;
   }
+}
+
+export function formatCreatedAt(value: string): string {
+  const match = value.match(/^(.*) ([+-])(\d{2})(\d{2}) \S+$/);
+  if (!match) return value;
+  const [, date, sign, hours, minutes] = match;
+  return `${date} ${sign}${hours}${minutes === "00" ? "" : `:${minutes}`}`;
+}
+
+export function formatContainerList(output: string): string {
+  const rows = output.trim()
+    ? output.trimEnd().split("\n").map(line => {
+        const [name = "", status = "", createdAt = "", ...projectPath] = line.split("\t");
+        return [name, status, formatCreatedAt(createdAt), projectPath.join("\t")];
+      })
+    : [];
+  const table = [["NAMES", "STATUS", "CREATED AT", "project path"], ...rows];
+  const widths = table[0].map((_, column) =>
+    Math.max(...table.map(row => row[column]?.length ?? 0)));
+  return table.map(row => row.map((value, column) =>
+    column === row.length - 1 ? value : value.padEnd(widths[column])).join("  ")).join("\n");
 }
 
 export function persistentDirectories(home = os.homedir()): string[] {

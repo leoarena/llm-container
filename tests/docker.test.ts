@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildCreateArgs, DockerClient } from "../src/docker.js";
+import {
+  buildCreateArgs,
+  DockerClient,
+  formatContainerList,
+  formatCreatedAt,
+} from "../src/docker.js";
 import type { ProjectTarget } from "../src/project.js";
 
 const target: ProjectTarget = {
@@ -37,6 +42,23 @@ describe("Docker integration arguments", () => {
       "llm-container-one-12345678",
       "llm-container-two-87654321",
     ]);
+  });
+  it("formats Docker creation timestamps with one UTC offset", () => {
+    expect(formatCreatedAt("2026-09-09 14:57:08 -0300 -03"))
+      .toBe("2026-09-09 14:57:08 -03");
+    expect(formatCreatedAt("2026-09-09 14:57:08 +0530 IST"))
+      .toBe("2026-09-09 14:57:08 +05:30");
+  });
+  it("renders the container list with a CREATED AT column", () => {
+    const output = [
+      "llm-container-api-12345678\tExited (137) 2 hours ago\t2026-09-09 14:57:08 -0300 -03\t/home/user/api",
+      "llm-container-web-87654321\tExited (0) 1 hour ago\t2026-09-09 15:57:08 -0300 -03\t/home/user/web",
+    ].join("\n");
+    const table = formatContainerList(output);
+    expect(table).toContain("NAMES");
+    expect(table).toContain("CREATED AT");
+    expect(table).toContain("2026-09-09 14:57:08 -03");
+    expect(table).not.toContain("-0300 -03");
   });
   it("rejects root images", () => {
     const client = new DockerClient(() => ({ status: 0, stdout: "root\n", stderr: "" }));
