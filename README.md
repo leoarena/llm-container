@@ -42,6 +42,26 @@ docker build --no-cache \
 The UID and GID are fixed in the image. Rebuild it when using the image for a
 host user with different IDs.
 
+### Python tooling
+
+The image includes `uv` and `uvx` from the official Astral uv image. During
+each image build, uv installs its latest stable/default managed Python and
+exposes it as `python` and `python3`. The uv image and Python versions are
+intentionally not pinned, so rebuilding can retrieve newer releases.
+
+Project virtual environments are created explicitly inside a workspace:
+
+```bash
+uv venv
+source .venv/bin/activate
+```
+
+The image does not create or activate a project virtual environment
+automatically and does not configure a custom uv cache. Use uv's normal
+commands such as `uv run`, `uv pip`, and `uvx` according to the mounted
+project's needs. Python and project environments are available to the normal
+non-root user.
+
 ### 3. Start a workspace
 
 ```bash
