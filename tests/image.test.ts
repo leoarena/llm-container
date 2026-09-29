@@ -30,6 +30,19 @@ function runInImage(command: string): string {
   return runDocker(["run", "--rm", imageTag, "sh", "-lc", command]);
 }
 
+function runInImageWithOpenCodeStateMount(image: string, command: string): string {
+  return runDocker([
+    "run",
+    "--rm",
+    "--mount",
+    "type=tmpfs,destination=/home/node/.local/state/opencode",
+    image,
+    "sh",
+    "-lc",
+    command,
+  ]);
+}
+
 const dockerDescribe = dockerIsReady() ? describe : describe.skip;
 
 dockerDescribe("workspace image runtime", () => {
@@ -50,6 +63,17 @@ dockerDescribe("workspace image runtime", () => {
     expect(output).toMatch(/^1000\n/m);
     expect(output).toMatch(/uv \d+\.\d+\.\d+/);
     expect(output).toMatch(/uvx \d+\.\d+\.\d+/);
+  }, 30_000);
+
+  it("provides the Spec Kit CLI to the normal user", () => {
+    const output = runInImageWithOpenCodeStateMount(
+      imageTag,
+      "id -u; command -v specify; specify --help",
+    );
+
+    expect(output).toMatch(/^1000\n/m);
+    expect(output).toContain("/home/node/.local/bin/specify");
+    expect(output).toMatch(/specify|Spec Kit/i);
   }, 30_000);
 
   it("provides uv-managed python and python3 to the normal user", () => {
@@ -92,14 +116,14 @@ dockerDescribe("workspace image runtime", () => {
         stdio: "inherit",
         timeout: 600_000,
       });
-      const output = execFileSync(
-        "docker",
-        ["run", "--rm", customTag, "sh", "-lc", "test $(id -u) = 2000 && uv --version && python --version"],
-        { cwd: repositoryRoot, encoding: "utf8" },
+      const output = runInImageWithOpenCodeStateMount(
+        customTag,
+        "test $(id -u) = 2000 && uv --version && python --version && command -v specify && specify --help",
       );
 
       expect(output).toMatch(/uv \d+\.\d+\.\d+/);
       expect(output).toMatch(/Python \d+\.\d+\.\d+/);
+      expect(output).toMatch(/specify|Spec Kit/i);
     } finally {
       spawnSync("docker", ["image", "rm", "--force", customTag], {
         cwd: repositoryRoot,

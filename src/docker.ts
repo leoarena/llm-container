@@ -139,11 +139,15 @@ export function formatContainerList(output: string): string {
 
 export function persistentDirectories(home = os.homedir()): string[] {
   const base = path.join(home, "llm_container_volume");
-  return [path.join(base, ".codex"), path.join(base, ".config", "opencode"), path.join(base, ".local")];
+  return [
+    path.join(base, ".codex"),
+    path.join(base, ".config", "opencode"),
+    path.join(base, ".local", "state", "opencode"),
+  ];
 }
 
 export function buildCreateArgs(target: ProjectTarget, home = os.homedir(), image = IMAGE_NAME): string[] {
-  const [codex, opencode, local] = persistentDirectories(home);
+  const [codex, opencode, opencodeState] = persistentDirectories(home);
   return [
     "run", "-d", "--name", target.containerName,
     "--label", MANAGED_LABEL,
@@ -152,7 +156,7 @@ export function buildCreateArgs(target: ProjectTarget, home = os.homedir(), imag
     "--workdir", target.containerPath,
     "--mount", bindMount(codex, "/home/node/.codex"),
     "--mount", bindMount(opencode, "/home/node/.config/opencode"),
-    "--mount", bindMount(local, "/home/node/.local"),
+    "--mount", bindMount(opencodeState, "/home/node/.local/state/opencode"),
     "--mount", bindMount(target.projectPath, target.containerPath),
     image, "sleep", "infinity",
   ];

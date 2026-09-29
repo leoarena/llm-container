@@ -62,6 +62,15 @@ commands such as `uv run`, `uv pip`, and `uvx` according to the mounted
 project's needs. Python and project environments are available to the normal
 non-root user.
 
+The image also includes the Spec Kit `specify` CLI. It is installed for the
+normal user from the upstream GitHub repository during the image build:
+
+```bash
+specify --help
+```
+
+Rebuild the image to refresh the CLI from the repository's current state.
+
 ### 3. Start a workspace
 
 ```bash
@@ -107,7 +116,7 @@ permissions before first use:
 mkdir -p \
   ~/llm_container_volume/.codex \
   ~/llm_container_volume/.config/opencode \
-  ~/llm_container_volume/.local
+  ~/llm_container_volume/.local/state/opencode
 ```
 
 If these directories were previously used by the root-based image, migrate
@@ -125,9 +134,12 @@ not resolve a named user to that user's effective UID inside a custom image.
 ### Isolation limits
 
 The container is a workspace boundary, not a sandbox for untrusted code. The
-project, `~/.codex`, `~/.config/opencode`, and `~/.local` are bind-mounted
-read-write. Processes in the container can modify or delete their contents and
-can access any credentials stored there. Container networking is not disabled,
+project, `~/.codex`, `~/.config/opencode`, and
+`~/.local/state/opencode` are bind-mounted read-write. The image's remaining
+`/home/node/.local` content, including user-local tools such as `specify`, is
+not replaced by the OpenCode state mount. Processes in the container can
+modify or delete mounted contents and can access any credentials stored there.
+Container networking is not disabled,
 so those processes can also make network connections and potentially transmit
 mounted data.
 

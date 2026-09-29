@@ -18,6 +18,8 @@ describe("Docker integration arguments", () => {
     expect(args).not.toContain("--rm");
     expect(args).toContain("io.llm-container.managed=true");
     expect(args).toContain("type=bind,source=/projects/my-api,target=/home/node/my-api");
+    expect(args).toContain("type=bind,source=/home/dev/llm_container_volume/.local/state/opencode,target=/home/node/.local/state/opencode");
+    expect(args).not.toContain("type=bind,source=/home/dev/llm_container_volume/.local,target=/home/node/.local");
     expect(args.slice(-3)).toEqual(["test-image", "sleep", "infinity"]);
   });
   it("builds the image from the supplied Dockerfile and context", () => {
