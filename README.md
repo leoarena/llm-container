@@ -71,6 +71,20 @@ specify --help
 
 Rebuild the image to refresh the CLI from the repository's current state.
 
+### Node-based agent tools
+
+The image includes `opencode-ai` and `@openai/codex`. npm is configured to use
+the normal user's writable prefix at `/home/node/.local`, so the `node` user can
+update either tool without root access:
+
+```bash
+npm install -g @openai/codex
+npm install -g opencode-ai
+```
+
+These updates apply to the current container. Rebuild the image to make them
+part of new containers created from the image.
+
 ### 3. Start a workspace
 
 ```bash

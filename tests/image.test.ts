@@ -65,6 +65,16 @@ dockerDescribe("workspace image runtime", () => {
     expect(output).toMatch(/uvx \d+\.\d+\.\d+/);
   }, 30_000);
 
+  it("provides npm agent tools in a user-writable global prefix", () => {
+    const output = runInImage(
+      "id -u; npm prefix -g; test -w \"$(npm prefix -g)\"; command -v codex",
+    );
+
+    expect(output).toMatch(/^1000\n/m);
+    expect(output).toContain("/home/node/.local");
+    expect(output).toMatch(/\/home\/node\/\.local\/bin\/codex/);
+  }, 30_000);
+
   it("provides the Spec Kit CLI to the normal user", () => {
     const output = runInImageWithOpenCodeStateMount(
       imageTag,
